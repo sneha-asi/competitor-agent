@@ -8,6 +8,7 @@ Run:  uvicorn main:app --reload --port 8000   (from app/backend, with ../.env po
 """
 import asyncio
 import json
+import os
 import pathlib
 
 from dotenv import load_dotenv
@@ -45,6 +46,22 @@ def get_client():
     return _client
 
 
+def _write_env(updates: dict):
+    """Persist settings to app/.env, preserving comments and other lines."""
+    lines = ENV_PATH.read_text().splitlines() if ENV_PATH.exists() else []
+    done, out = set(), []
+    for ln in lines:
+        head = ln.split("=", 1)[0].strip()
+        if ln.strip() and not ln.lstrip().startswith("#") and head in updates:
+            out.append(f"{head}={updates[head]}"); done.add(head)
+        else:
+            out.append(ln)
+    for k, v in updates.items():
+        if k not in done:
+            out.append(f"{k}={v}")
+    ENV_PATH.write_text("\n".join(out) + "\n")
+
+
 def _sse(payload: dict) -> str:
     return f"data: {json.dumps(payload)}\n\n"
 
@@ -78,8 +95,35 @@ async def _stream(make_coro):
 
 @app.get("/api/health")
 async def health():
-    import os
     return {"ok": True, "model": pipeline.agents.MODEL, "has_key": bool(os.environ.get("ANTHROPIC_API_KEY"))}
+
+
+@app.post("/api/settings")
+async def save_settings(req: Request):
+    """Set the API key (validated against Anthropic) and/or the model, from the UI. Saved to app/.env."""
+    global _client
+    body = await req.json()
+    key = (body.get("key") or "").strip()
+    model = (body.get("model") or "").strip()
+    updates = {}
+    if key:
+        from anthropic import AsyncAnthropic, AuthenticationError
+        try:
+            await AsyncAnthropic(api_key=key).models.list(limit=1)  # validates auth, no token cost
+        except AuthenticationError:
+            return JSONResponse({"error": "Anthropic rejected that key (401). Double-check it."}, status_code=400)
+        except Exception as exc:
+            return JSONResponse({"error": f"Couldn't validate the key: {exc}"}, status_code=400)
+        os.environ["ANTHROPIC_API_KEY"] = key
+        updates["ANTHROPIC_API_KEY"] = key
+        _client = None  # rebuild with the new key on next request
+    if model:
+        os.environ["COMPETITOR_MODEL"] = model
+        pipeline.agents.MODEL = model
+        updates["COMPETITOR_MODEL"] = model
+    if updates:
+        _write_env(updates)
+    return {"ok": True, "has_key": bool(os.environ.get("ANTHROPIC_API_KEY")), "model": pipeline.agents.MODEL}
 
 
 @app.post("/api/discover")
