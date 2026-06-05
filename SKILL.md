@@ -107,7 +107,10 @@ macOS `open <file>.html` shows it in the browser. Then hand the user the path.
 ## Orchestrated (multi-agent) mode — the exhaustive default
 For the exhaustive run, drive the subagent fleet in `scripts/competitor_workflow.js` via the
 **Workflow** tool, in two stages around the approval gate (full design:
-[ARCHITECTURE.md](ARCHITECTURE.md)):
+[ARCHITECTURE.md](ARCHITECTURE.md)). The workflow calls the 9 agents in `agents/` by `agentType`, so
+they must be registered first — **one-time setup:** `bash scripts/install-agents.sh` (symlinks them
+into `~/.claude/agents/` as `competitor-*`). If they aren't installed, install them or fall back to
+the inline steps 1–6 above.
 
 1. **Discover** — `Workflow({ scriptPath: ".../scripts/competitor_workflow.js", args: { stage:
    "discover", product: { kind: "repo|url|doc|text", ref: "<path/url/text>", notes: "" } } })`.

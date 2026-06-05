@@ -21,12 +21,8 @@ export const meta = {
   ],
 }
 
-// ----------------------------------------------------------------- shared rules (in every prompt)
-const RULES = `Ground rules — these are non-negotiable:
-- NO fabricated data. Every factual claim about a competitor must trace to a real source you actually read (URL). If you cannot establish a fact, say so — never guess or infer a feature that isn't evidenced.
-- Prefer PRIMARY sources (the company's own site, pricing page, docs/API, changelog) over third-party summaries; use third-party (G2, news) to corroborate.
-- Be specific and falsifiable: "starts at $49/seat/mo (pricing page)" beats "affordable". Quote numbers and dates with their source.
-- Be neutral and accurate, not promotional. Describe each product as its makers would, then note its real shape.`
+// Methodology/rules now live in each agent's definition (agents/*.md, installed via
+// scripts/install-agents.sh). The workflow passes task + data and selects the agent by agentType.
 
 // ----------------------------------------------------------------- research dimensions (Phase C)
 const DIMENSIONS = [
@@ -227,27 +223,27 @@ if (stage === 'discover') {
   if (!product || !product.ref) throw new Error('discover stage needs args.product {kind, ref}')
   const tasks = readerTasks(product)
   const parts = (await parallel(
-    tasks.map((t, i) => () => agent(`${RULES}\n\nYou are reading OUR OWN product to establish "our side" of a competitive analysis. Use ONLY what the material actually shows — do not invent capabilities.\n\nTask: ${t}\n\nReturn a partial product profile.`,
-      { label: `intake:${i + 1}`, phase: 'Intake', schema: PROFILE_PART }))
+    tasks.map((t, i) => () => agent(`You are reading OUR OWN product to establish "our side" of a competitive analysis. Use ONLY what the material actually shows — do not invent capabilities.\n\nTask: ${t}\n\nReturn a partial product profile.`,
+      { agentType: 'competitor-intake-reader', label: `intake:${i + 1}`, phase: 'Intake', schema: PROFILE_PART }))
   )).filter(Boolean)
 
   const productProfile = await agent(
-    `${RULES}\n\nMerge these partial reads of OUR product into one clean profile. De-duplicate capabilities, pick the sharpest category label and ICP, write a one-line "money_question" a buyer answers with this product, a "signature" capability line, up to 2 footprint stats, and 4-6 "search_seeds" (queries/keywords) we'll use to find competitors.\n\nPartial reads:\n${JSON.stringify(parts)}`,
-    { label: 'intake:synthesize', phase: 'Intake', schema: PRODUCT_PROFILE })
+    `Merge these partial reads of OUR product into one clean profile. De-duplicate capabilities, pick the sharpest category label and ICP, write a one-line "money_question" a buyer answers with this product, a "signature" capability line, up to 2 footprint stats, and 4-6 "search_seeds" (queries/keywords) we'll use to find competitors.\n\nPartial reads:\n${JSON.stringify(parts)}`,
+    { agentType: 'competitor-product-synthesizer', label: 'intake:synthesize', phase: 'Intake', schema: PRODUCT_PROFILE })
 
   log(`Product understood: ${productProfile.name} — ${productProfile.category}`)
 
   // ---- Phase B: Discovery (blind multi-modal sweep -> rank) ----
   phase('Discovery')
   const sweeps = (await parallel(
-    DISCOVERY_ANGLES.map((mk, i) => () => agent(`${RULES}\n\nProduct: ${productProfile.name} — ${productProfile.what_it_is || productProfile.category}\nCategory: ${productProfile.category}\nSearch seeds: ${(productProfile.search_seeds || []).join(', ')}\n\n${mk(productProfile)}\n\nReturn every credible competitor you find with why it competes and any leadership signals (funding, customers, analyst standing) + sources.`,
-      { label: `discover:${i + 1}`, phase: 'Discovery', schema: CANDIDATE_LIST }))
+    DISCOVERY_ANGLES.map((mk, i) => () => agent(`Product: ${productProfile.name} — ${productProfile.what_it_is || productProfile.category}\nCategory: ${productProfile.category}\nSearch seeds: ${(productProfile.search_seeds || []).join(', ')}\n\n${mk(productProfile)}\n\nReturn every credible competitor you find with why it competes and any leadership signals (funding, customers, analyst standing) + sources.`,
+      { agentType: 'competitor-discovery-scout', label: `discover:${i + 1}`, phase: 'Discovery', schema: CANDIDATE_LIST }))
   )).filter(Boolean)
 
   const allCandidates = sweeps.flatMap((s) => (s && s.candidates) || [])
   const ranked = await agent(
-    `${RULES}\n\nYou are the RANKER. Here are competitor candidates gathered four different ways for "${productProfile.name}" (${productProfile.category}). De-duplicate (same company under different names/URLs = one entry), then rank by MARKET LEADERSHIP — the dominant, most-recognized names buyers benchmark against (mindshare, funding, customer base, analyst standing), NOT raw closeness. Output the full ranked list with a 0-100 leadership_score and the single best TOP 2 to compare against.\n\nCandidates:\n${JSON.stringify(allCandidates)}`,
-    { label: 'discover:rank', phase: 'Discovery', schema: RANKED })
+    `You are the RANKER. Here are competitor candidates gathered four different ways for "${productProfile.name}" (${productProfile.category}). De-duplicate (same company under different names/URLs = one entry), then rank by MARKET LEADERSHIP — the dominant, most-recognized names buyers benchmark against (mindshare, funding, customer base, analyst standing), NOT raw closeness. Output the full ranked list with a 0-100 leadership_score and the single best TOP 2 to compare against.\n\nCandidates:\n${JSON.stringify(allCandidates)}`,
+    { agentType: 'competitor-ranker', label: 'discover:rank', phase: 'Discovery', schema: RANKED })
 
   log(`Top 2 by market leadership: ${ranked.top2.map((c) => c.name).join(' · ')}`)
   return { productProfile, ranked: ranked.ranked, top2: ranked.top2 }
@@ -266,24 +262,24 @@ const profiles = (await pipeline(
   competitors,
   // stage 1: research every dimension for this competitor, in parallel
   (comp) => parallel(DIMENSIONS.map((d) => () =>
-    agent(`${RULES}\n\nResearch the competitor "${comp.name}" (${comp.url || 'find their site'}) on ONE dimension.\n\nDimension — ${d.key}: ${d.focus}\n\nUse WebSearch + WebFetch. For each finding, record the source URL, its date if shown, and a reliability tier (primary vendor page/docs > aggregator like G2/Crunchbase > individual review > vendor blog); flag anything older than ~12 months as worth re-verifying. Return specific, sourced findings; list what you could not verify under unknowns.`,
-      { label: `research:${comp.name}:${d.key}`, phase: 'Research', schema: FINDINGS })
+    agent(`Research the competitor "${comp.name}" (${comp.url || 'find their site'}) on ONE dimension.\n\nDimension — ${d.key}: ${d.focus}\n\nUse WebSearch + WebFetch. For each finding, record the source URL, its date if shown, and a reliability tier (primary vendor page/docs > aggregator like G2/Crunchbase > individual review > vendor blog); flag anything older than ~12 months as worth re-verifying. Return specific, sourced findings; list what you could not verify under unknowns.`,
+      { agentType: 'competitor-dimension-researcher', label: `research:${comp.name}:${d.key}`, phase: 'Research', schema: FINDINGS })
   )),
   // stage 2: synthesize this competitor's findings into a profile
-  (findings, comp) => agent(`${RULES}\n\nSynthesize a clean competitor profile for "${comp.name}" from these per-dimension findings. Produce: what_it_is (neutral), a category_label (short chip), the buyer's money_question, the signature feature, up to 2 footprint stats, a capabilities list (each with a status_hint of owned/partial/gap and a source), known gaps, and a deduped sources list (label+url). Keep every claim tied to a source from the findings.\n\nFindings:\n${JSON.stringify((findings || []).filter(Boolean))}`,
-    { label: `research:${comp.name}:synth`, phase: 'Research', schema: COMPETITOR_PROFILE })
+  (findings, comp) => agent(`Synthesize a clean competitor profile for "${comp.name}" from these per-dimension findings. Produce: what_it_is (neutral), a category_label (short chip), the buyer's money_question, the signature feature, up to 2 footprint stats, a capabilities list (each with a status_hint of owned/partial/gap and a source), known gaps, and a deduped sources list (label+url). Keep every claim tied to a source from the findings.\n\nFindings:\n${JSON.stringify((findings || []).filter(Boolean))}`,
+    { agentType: 'competitor-profile-synthesizer', label: `research:${comp.name}:synth`, phase: 'Research', schema: COMPETITOR_PROFILE })
 )).filter(Boolean)
 
 // ---- Phase D: Synthesis (matrix + narrative fan out, then assemble in code) ----
 phase('Synthesis')
 const names = platformNames(productProfile, competitors)
 const matrixDraft = await agent(
-  `${RULES}\n\nBuild the FEATURE MATRIX. Platforms (exact keys to use in "verdicts"): ${JSON.stringify(names)}. Our product is "${productProfile.name}".\n\nAnchor rows on Jobs-to-be-Done and real capability DEPTH, not feature-count — a longer checkmark column is not a win. Start from this canonical palette and adapt it to THIS category, keeping 8-14 rows that are a HONEST mix of rows we win, tie, and lose: core capability depth · integrations · API / developer experience · analytics & reporting · AI / automation · admin & governance · security & compliance · scalability · onboarding / time-to-value · support · pricing transparency · segment/ICP fit. For every platform in every row assign a status: owned (has it, shipping) | ahead (a genuine differentiator/lead) | partial (limited/gated/beta) | gap (missing) | unknown (couldn't establish). Competitor cells MUST carry a "source" URL drawn from the profiles — a competitor cell with a definite status but no source will be voided to unknown. Grade OURSELVES by the same evidence bar: do not score ourselves owned/ahead everywhere, and only mark us "ahead" on a row where NO competitor matches us. Add a one-line honest "reality" per row. Also add up to 3 "glance_notes" ("X leads on Y", count like "9/12").\n\nOur product profile:\n${JSON.stringify(productProfile)}\n\nCompetitor profiles:\n${JSON.stringify(profiles)}`,
-  { label: 'synth:matrix', phase: 'Synthesis', schema: MATRIX })
+  `Build the FEATURE MATRIX. Platforms (exact keys to use in "verdicts"): ${JSON.stringify(names)}. Our product is "${productProfile.name}".\n\nAnchor rows on Jobs-to-be-Done and real capability DEPTH, not feature-count — a longer checkmark column is not a win. Start from this canonical palette and adapt it to THIS category, keeping 8-14 rows that are a HONEST mix of rows we win, tie, and lose: core capability depth · integrations · API / developer experience · analytics & reporting · AI / automation · admin & governance · security & compliance · scalability · onboarding / time-to-value · support · pricing transparency · segment/ICP fit. For every platform in every row assign a status: owned (has it, shipping) | ahead (a genuine differentiator/lead) | partial (limited/gated/beta) | gap (missing) | unknown (couldn't establish). Competitor cells MUST carry a "source" URL drawn from the profiles — a competitor cell with a definite status but no source will be voided to unknown. Grade OURSELVES by the same evidence bar: do not score ourselves owned/ahead everywhere, and only mark us "ahead" on a row where NO competitor matches us. Add a one-line honest "reality" per row. Also add up to 3 "glance_notes" ("X leads on Y", count like "9/12").\n\nOur product profile:\n${JSON.stringify(productProfile)}\n\nCompetitor profiles:\n${JSON.stringify(profiles)}`,
+  { agentType: 'competitor-matrix-builder', label: 'synth:matrix', phase: 'Synthesis', schema: MATRIX })
 
 const narrative = await agent(
-  `${RULES}\n\nWrite the NARRATIVE sections of the briefing for "${productProfile.name}" vs ${competitors.map((c) => c.name).join(', ')}, grounded in the matrix and profiles. Tone: plain, declarative, self-critical (this is intelligence, not marketing).\n\nProduce:\n- hero: {kicker:"Competitive Intelligence", tagline (≤12 words, "where we lead, where we lag, what to build next" energy), subtitle (1 sentence)}\n- tldr: {lead_in:"The honest read", sub, paragraphs:[2 short HTML-ok paragraphs — the honest topline], chips:[3 → {tone:green|blue|amber, icon:check|trending|alert, title, body}]}\n- ahead: {sub, items:[the moats where WE genuinely lead → {title, body}]}\n- closeable: {sub, items:[gaps closeable in ~a quarter → {title, desc, effort (e.g. "2-3 wks"), priority:HIGH|MEDIUM|LOW, effort_level:low|med|high, value:low|med|high}]}\n- decisions: {sub, items:[strategic OPEN QUESTIONS, not eng tasks → {title, body}]}\n- positioning: {sub, stats:[3 → {tone, value (≤2 words), label}], paragraphs:[1-2 HTML-ok], pullquote (the positioning sentence), closing, checklists:[ "To match <rival>" lists with {title, marker:"→"|"?", marker_color, items:[]}, and an "Already ours" {title, tone:green, marker:"✓", items:[]} ]}\n\nMatrix:\n${JSON.stringify(matrixDraft)}\n\nProfiles:\n${JSON.stringify(profiles)}`,
-  { label: 'synth:narrative', phase: 'Synthesis', schema: NARRATIVE })
+  `Write the NARRATIVE sections of the briefing for "${productProfile.name}" vs ${competitors.map((c) => c.name).join(', ')}, grounded in the matrix and profiles. Tone: plain, declarative, self-critical (this is intelligence, not marketing).\n\nProduce:\n- hero: {kicker:"Competitive Intelligence", tagline (≤12 words, "where we lead, where we lag, what to build next" energy), subtitle (1 sentence)}\n- tldr: {lead_in:"The honest read", sub, paragraphs:[2 short HTML-ok paragraphs — the honest topline], chips:[3 → {tone:green|blue|amber, icon:check|trending|alert, title, body}]}\n- ahead: {sub, items:[the moats where WE genuinely lead → {title, body}]}\n- closeable: {sub, items:[gaps closeable in ~a quarter → {title, desc, effort (e.g. "2-3 wks"), priority:HIGH|MEDIUM|LOW, effort_level:low|med|high, value:low|med|high}]}\n- decisions: {sub, items:[strategic OPEN QUESTIONS, not eng tasks → {title, body}]}\n- positioning: {sub, stats:[3 → {tone, value (≤2 words), label}], paragraphs:[1-2 HTML-ok], pullquote (the positioning sentence), closing, checklists:[ "To match <rival>" lists with {title, marker:"→"|"?", marker_color, items:[]}, and an "Already ours" {title, tone:green, marker:"✓", items:[]} ]}\n\nMatrix:\n${JSON.stringify(matrixDraft)}\n\nProfiles:\n${JSON.stringify(profiles)}`,
+  { agentType: 'competitor-narrative-writer', label: 'synth:narrative', phase: 'Synthesis', schema: NARRATIVE })
 
 // ---- Phase E: Adversarial verification (refute each risky competitor claim vs its source) ----
 phase('Verify')
@@ -305,8 +301,8 @@ log(`Verifying ${claims.length} competitor claims with ${SKEPTICS} skeptics each
 
 const verdicts = await parallel(claims.map((cl) => () =>
   parallel(Array.from({ length: SKEPTICS }, (_, k) => () =>
-    agent(`${RULES}\n\nYou are a SKEPTIC. Try to REFUTE this competitive-analysis claim. Default to supported=false if the source does not clearly back it.\n\nClaim: "${cl.plat} — ${cl.cap}: status=${cl.status}${cl.note ? ' (' + cl.note + ')' : ''}".\nCited source: ${cl.source}\n\n${LENSES[k % LENSES.length]}\n\nFetch the source and judge whether it clearly supports the claim.`,
-      { label: `verify:${cl.plat}:${cl.cap.slice(0, 20)}:${k + 1}`, phase: 'Verify', schema: REFUTE })
+    agent(`You are a SKEPTIC. Try to REFUTE this competitive-analysis claim. Default to supported=false if the source does not clearly back it.\n\nClaim: "${cl.plat} — ${cl.cap}: status=${cl.status}${cl.note ? ' (' + cl.note + ')' : ''}".\nCited source: ${cl.source}\n\n${LENSES[k % LENSES.length]}\n\nFetch the source and judge whether it clearly supports the claim.`,
+      { agentType: 'competitor-claim-verifier', label: `verify:${cl.plat}:${cl.cap.slice(0, 20)}:${k + 1}`, phase: 'Verify', schema: REFUTE })
   )).then((votes) => {
     const v = votes.filter(Boolean)
     const supported = v.filter((x) => x.supported).length
