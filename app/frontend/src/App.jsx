@@ -3,9 +3,7 @@ import React, { useState, useRef } from 'react'
 // POST a JSON body and consume the SSE response, invoking onEvent for each `data:` frame.
 async function streamPost(url, body, onEvent) {
   const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
   })
   if (!res.ok) {
     let msg = `HTTP ${res.status}`
@@ -28,6 +26,36 @@ async function streamPost(url, body, onEvent) {
   }
 }
 
+const KINDS = [
+  { v: 'url', label: 'Website' },
+  { v: 'repo', label: 'Repo' },
+  { v: 'doc', label: 'Doc' },
+  { v: 'text', label: 'Describe' },
+]
+const PLACEHOLDER = { url: 'https://yourproduct.com', repo: '/path/to/repo', doc: '/path/to/brief.md', text: 'What it does, who it’s for, the problem it solves…' }
+
+const Check = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m20 6-11 11L4 12" /></svg>
+)
+
+function Stepper({ step, done }) {
+  const steps = [{ n: 1, label: 'Product' }, { n: 2, label: 'Rivals' }, { n: 3, label: 'Report' }]
+  return (
+    <div className="steps">
+      {steps.map((s, i) => {
+        const isDone = s.n < step || (s.n === 3 && done)
+        const cls = isDone ? 'step done' : s.n === step ? 'step active' : 'step'
+        return (
+          <React.Fragment key={s.n}>
+            {i > 0 && <span className="sep" />}
+            <span className={cls}><span className="dot">{isDone ? <Check /> : s.n}</span><span>{s.label}</span></span>
+          </React.Fragment>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function App() {
   const [phase, setPhase] = useState('form') // form | discovering | review | building | done
   const [product, setProduct] = useState({ kind: 'url', ref: '', notes: '' })
@@ -41,9 +69,8 @@ export default function App() {
   const logRef = useRef(null)
 
   const addLog = (e) => setLog((L) => {
-    const next = [...L, e]
     queueMicrotask(() => logRef.current?.scrollTo(0, 1e9))
-    return next
+    return [...L, e]
   })
 
   async function runDiscover() {
@@ -52,17 +79,14 @@ export default function App() {
     try {
       await streamPost('/api/discover', { product }, (e) => {
         if (e.type === 'progress') addLog(e)
-        else if (e.type === 'error') addLog({ phase: 'Error', message: e.message, err: true })
+        else if (e.type === 'error') addLog({ phase: 'Error', message: e.message })
         else if (e.type === 'result') {
-          setProfile(e.productProfile)
-          setRanked(e.ranked || [])
-          setSelected(new Set((e.top2 || []).map((c) => c.name)))
-          setPhase('review')
+          setProfile(e.productProfile); setRanked(e.ranked || [])
+          setSelected(new Set((e.top2 || []).map((c) => c.name))); setPhase('review')
         }
       })
-    } catch (err) {
-      addLog({ phase: 'Error', message: String(err.message || err), err: true }); setPhase('form')
-    }
+      setPhase((p) => (p === 'discovering' ? 'form' : p))
+    } catch (err) { addLog({ phase: 'Error', message: String(err.message || err) }); setPhase('form') }
   }
 
   async function runBuild() {
@@ -72,121 +96,142 @@ export default function App() {
     try {
       await streamPost('/api/build', { productProfile: profile, competitors, meta }, (e) => {
         if (e.type === 'progress') addLog(e)
-        else if (e.type === 'error') addLog({ phase: 'Error', message: e.message, err: true })
+        else if (e.type === 'error') addLog({ phase: 'Error', message: e.message })
         else if (e.type === 'result') { setHtml(e.html || ''); setReport(e.report); setPhase('done') }
       })
-    } catch (err) {
-      addLog({ phase: 'Error', message: String(err.message || err), err: true }); setPhase('review')
-    }
+    } catch (err) { addLog({ phase: 'Error', message: String(err.message || err) }); setPhase('review') }
   }
 
-  const toggle = (name) => setSelected((s) => {
-    const n = new Set(s); n.has(name) ? n.delete(name) : n.add(name); return n
-  })
-
+  const toggle = (name) => setSelected((s) => { const n = new Set(s); n.has(name) ? n.delete(name) : n.add(name); return n })
+  const slug = (profile?.name || 'product').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
   const download = () => {
-    const slug = (profile?.name || 'product').toLowerCase().replace(/[^a-z0-9]+/g, '-')
     const a = document.createElement('a')
     a.href = URL.createObjectURL(new Blob([html], { type: 'text/html' }))
     a.download = `${slug}-comparison.html`; a.click()
   }
 
   const busy = phase === 'discovering' || phase === 'building'
+  const step = ['form', 'discovering'].includes(phase) ? 1 : phase === 'review' ? 2 : 3
+  const lastPhase = log.length ? log[log.length - 1].phase : null
 
   return (
-    <div className="wrap">
-      <header className="hero">
-        <div className="kick">● Competitive Intelligence</div>
-        <h1>Competitor Agent</h1>
-        <p>Give it your product. It finds the top 2 market leaders, researches them, and builds the briefing.</p>
-      </header>
-
-      <div className="card">
-        <h2>1 · Your product</h2>
-        <div className="row">
-          <div>
-            <label>Input type</label>
-            <select value={product.kind} onChange={(e) => setProduct({ ...product, kind: e.target.value })}>
-              <option value="url">Website / URL</option>
-              <option value="repo">Local repo path</option>
-              <option value="doc">Local doc path</option>
-              <option value="text">Pasted description</option>
-            </select>
-          </div>
-          <div style={{ gridColumn: 'span 2' }}>
-            <label>{product.kind === 'text' ? 'Describe the product' : 'Path or URL'}</label>
-            <input value={product.ref} placeholder={product.kind === 'url' ? 'https://yourproduct.com' : product.kind === 'text' ? 'What it does, who it’s for…' : '/path/to/repo'}
-              onChange={(e) => setProduct({ ...product, ref: e.target.value })} />
-          </div>
-        </div>
-        <label>Notes for the analyst (optional)</label>
-        <textarea value={product.notes} onChange={(e) => setProduct({ ...product, notes: e.target.value })}
-          placeholder="Anything the agent should know about your product or who you compete with." />
-        <div className="row" style={{ marginTop: 4 }}>
-          <div><label>Org / brand</label><input value={meta.org} onChange={(e) => setMeta({ ...meta, org: e.target.value })} placeholder="Acme" /></div>
-          <div><label>Author</label><input value={meta.author} onChange={(e) => setMeta({ ...meta, author: e.target.value })} placeholder="Your name" /></div>
-          <div><label>Date label</label><input value={meta.date_label} onChange={(e) => setMeta({ ...meta, date_label: e.target.value })} placeholder="June 2026 · Internal" /></div>
-        </div>
-        <div className="actions">
-          <button onClick={runDiscover} disabled={busy || !product.ref.trim()}>
-            {phase === 'discovering' ? <><span className="spin" /> &nbsp;Discovering…</> : 'Find competitors →'}
-          </button>
-          {profile && <span style={{ color: 'var(--muted)', fontSize: 13 }}>Understood: <b>{profile.name}</b> — {profile.category}</span>}
-        </div>
+    <>
+      <div className="topbar">
+        <div className="brand"><span className="mark">◆</span> Competitor Agent <small>· competitive intelligence</small></div>
+        <Stepper step={step} done={phase === 'done'} />
       </div>
 
-      {(busy || log.length > 0) && (
+      <div className="wrap">
+        <div className="hero">
+          <div className="kick"><i />Competitive Intelligence</div>
+          <h1>Size up your competition, honestly.</h1>
+          <p>Give it your product. It finds your top two market rivals, researches them, fact-checks every claim, and writes the briefing.</p>
+          <div className="flow">
+            <span><b>1</b> Read your product</span>
+            <span><b>2</b> Find the rivals</span>
+            <span><b>3</b> Research + verify</span>
+            <span><b>4</b> Render the report</span>
+          </div>
+        </div>
+
         <div className="card">
-          <h2>Progress</h2>
-          <div className="log" ref={logRef}>
-            {log.map((e, i) => (
-              <div key={i} className={e.err ? 'err' : ''}>
-                <span className="phase">[{e.phase}]</span> {e.message}
-              </div>
+          <div className="card-h"><span className="n">1</span><h2>Your product</h2></div>
+          <p className="card-sub">A website, a repo, a doc, or a quick description. Your side is built only from what you give it.</p>
+
+          <label>Input</label>
+          <div className="seg">
+            {KINDS.map((k) => (
+              <button key={k.v} className={product.kind === k.v ? 'on' : ''} onClick={() => setProduct({ ...product, kind: k.v })}>{k.label}</button>
             ))}
           </div>
-        </div>
-      )}
 
-      {phase === 'review' && (
-        <div className="card">
-          <h2>2 · Approve the rivals <span className="pill">{selected.size} selected</span></h2>
-          <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 0 }}>
-            Ranked by market leadership. The top 2 are pre-selected — swap if you’d rather compare against others.
-          </p>
-          {ranked.map((r) => (
-            <label className="cand" key={r.name} style={{ cursor: 'pointer' }}>
-              <input type="checkbox" checked={selected.has(r.name)} onChange={() => toggle(r.name)} />
-              <div>
-                <div><b>{r.name}</b> {typeof r.leadership_score === 'number' && <span className="pill num">{Math.round(r.leadership_score)}</span>}</div>
-                <div className="why">{r.why}</div>
-                {r.url && <a href={r.url} target="_blank" rel="noreferrer">{r.url}</a>}
-              </div>
-            </label>
-          ))}
+          <label>{product.kind === 'text' ? 'Describe the product' : product.kind === 'url' ? 'Website URL' : 'Path'}</label>
+          <input value={product.ref} placeholder={PLACEHOLDER[product.kind]}
+            onChange={(e) => setProduct({ ...product, ref: e.target.value })} />
+
+          <label>Notes for the analyst (optional)</label>
+          <textarea value={product.notes} placeholder="Anything it should know about your product or who you compete with."
+            onChange={(e) => setProduct({ ...product, notes: e.target.value })} />
+
+          <div className="grid3">
+            <div><label>Org / brand</label><input value={meta.org} placeholder="Acme" onChange={(e) => setMeta({ ...meta, org: e.target.value })} /></div>
+            <div><label>Author</label><input value={meta.author} placeholder="Your name" onChange={(e) => setMeta({ ...meta, author: e.target.value })} /></div>
+            <div><label>Date label</label><input value={meta.date_label} placeholder="June 2026 · Internal" onChange={(e) => setMeta({ ...meta, date_label: e.target.value })} /></div>
+          </div>
+
           <div className="actions">
-            <button onClick={runBuild} disabled={!selected.size}>Build report ({selected.size}) →</button>
-            <button className="secondary" onClick={() => setPhase('form')}>Start over</button>
+            <button className="btn" onClick={runDiscover} disabled={busy || !product.ref.trim()}>
+              {phase === 'discovering' ? <><span className="spin" /> Discovering…</> : <>Find competitors →</>}
+            </button>
+            {profile && <span className="understood">Understood: <b>{profile.name}</b> — {profile.category}</span>}
           </div>
         </div>
-      )}
 
-      {phase === 'done' && (
-        <div className="card">
-          <h2>3 · Report</h2>
-          {report && (
-            <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 0 }}>
-              {report.rows} capabilities · vs {report.competitors?.join(', ')} · {report.sources} sources
-              {report.claims_downgraded?.length ? ` · ${report.claims_downgraded.length} claim(s) downgraded to unknown` : ''}
-            </p>
-          )}
-          <div className="actions" style={{ marginTop: 0, marginBottom: 14 }}>
-            <button onClick={download}>Download HTML</button>
-            <button className="secondary" onClick={() => setPhase('form')}>New analysis</button>
+        {(busy || log.length > 0) && (
+          <div className="card">
+            <div className="card-h"><span className="n">~</span><h2>Live progress</h2></div>
+            {busy && <div className="live"><span className="pulse" /> Working{lastPhase ? ` · ${lastPhase}` : ''}…</div>}
+            <div className="timeline" ref={logRef}>
+              {log.map((e, i) => (
+                <div className="tl-row" key={i}>
+                  <span className={`chip chip-${e.phase}`}>{e.phase}</span>
+                  <span className="msg">{e.message}</span>
+                </div>
+              ))}
+            </div>
           </div>
-          <iframe className="report" title="report" srcDoc={html} />
-        </div>
-      )}
-    </div>
+        )}
+
+        {phase === 'review' && (
+          <div className="card">
+            <div className="card-h"><span className="n">2</span><h2>Approve the rivals</h2></div>
+            <p className="card-sub">Ranked by market leadership — the top two are pre-selected. Swap if you’d rather compare against others.</p>
+            <div className="cands">
+              {ranked.map((r) => (
+                <div className={`cand${selected.has(r.name) ? ' sel' : ''}`} key={r.name} onClick={() => toggle(r.name)}>
+                  <span className="tick"><Check /></span>
+                  <div>
+                    <div className="name">{r.name} {typeof r.leadership_score === 'number' && <span className="score">{Math.round(r.leadership_score)}</span>}</div>
+                    <div className="why">{r.why}</div>
+                    {r.url && <a href={r.url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>{r.url}</a>}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="actions">
+              <button className="btn" onClick={runBuild} disabled={!selected.size || busy}>
+                {phase === 'building' ? <><span className="spin" /> Building…</> : <>Build report ({selected.size}) →</>}
+              </button>
+              <button className="ghost btn" onClick={() => setPhase('form')}>Start over</button>
+            </div>
+          </div>
+        )}
+
+        {phase === 'done' && (
+          <div className="card">
+            <div className="card-h"><span className="n"><Check /></span><h2>Your report</h2></div>
+            {report && (
+              <p className="report-info">
+                {report.rows} capabilities · vs {report.competitors?.join(', ')} · {report.sources} sources
+                {report.claims_downgraded?.length ? ` · ${report.claims_downgraded.length} unverified claim(s) marked unknown` : ''}
+              </p>
+            )}
+            <div className="actions" style={{ marginTop: 0, marginBottom: 16, marginLeft: 34 }}>
+              <button className="btn" onClick={download}>Download HTML</button>
+              <button className="ghost btn" onClick={() => setPhase('form')}>New analysis</button>
+            </div>
+            <div className="browser">
+              <div className="bar">
+                <div className="lights"><i style={{ background: '#FF5F57' }} /><i style={{ background: '#FEBC2E' }} /><i style={{ background: '#28C840' }} /></div>
+                <div className="url">{slug}-comparison.html</div>
+              </div>
+              <iframe className="report" title="report" srcDoc={html} />
+            </div>
+          </div>
+        )}
+
+        <footer className="foot">Runs on the Anthropic API · every competitor claim is sourced and verified</footer>
+      </div>
+    </>
   )
 }
