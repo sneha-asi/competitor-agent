@@ -104,6 +104,26 @@ Open the file and confirm it renders: sections present, no broken layout, charts
 no literal `&amp;` / `&#x27;` showing as text. If a preview tool is available, screenshot it; on
 macOS `open <file>.html` shows it in the browser. Then hand the user the path.
 
+## Orchestrated (multi-agent) mode — the exhaustive default
+For the exhaustive run, drive the subagent fleet in `scripts/competitor_workflow.js` via the
+**Workflow** tool, in two stages around the approval gate (full design:
+[ARCHITECTURE.md](ARCHITECTURE.md)):
+
+1. **Discover** — `Workflow({ scriptPath: ".../scripts/competitor_workflow.js", args: { stage:
+   "discover", product: { kind: "repo|url|doc|text", ref: "<path/url/text>", notes: "" } } })`.
+   Returns `{ productProfile, ranked, top2 }`. Play back the product understanding (Gate 1), then
+   present `top2` (with `ranked` as alternates) via `AskUserQuestion` — user approves or swaps (Gate 2).
+2. **Build** — `Workflow({ scriptPath, args: { stage: "build", productProfile, competitors: [approved],
+   meta: { org, date_label, author } } })`. Runs Phases C–E (research → synthesis → adversarial
+   verification) and returns `{ data, report }` — a validated `data.json`.
+3. **Render** — write `data` to `data.json`, run `python3 scripts/build_page.py data.json -o
+   <name>-comparison.html`, verify, deliver. Share the `report` (rows, claims verified, what was
+   downgraded to `unknown`).
+
+This spawns many subagents and costs real tokens — **confirm with the user before launching each
+stage**. For a quick/cheap pass, skip the workflow and do steps 1–6 above inline. Methodology the
+agents follow: [references/methodology.md](references/methodology.md).
+
 ## Editing
 - To change **content/numbers** → edit `data.json` and re-render. Never hand-edit the HTML output.
 - To change the **design itself** (a new section type, color tweak) → edit `scripts/build_page.py`.

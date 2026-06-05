@@ -42,21 +42,14 @@ Depth → **Exhaustive** · "Biggest" → **Market leaders** · **Confirm picks 
 
 ---
 
-## What's left to build (implementation)
-1. **Write the orchestration script** `scripts/competitor_workflow.js` implementing Phases A–F with
-   `phase()` / `parallel()` / `pipeline()` and schema-validated agent outputs (per ARCHITECTURE.md).
-   - Split at Gate 2: script returns after Phase B; a second entry runs C–F on approval.
-2. **Define the JSON schemas** for each artifact (product_profile, candidates, competitor_profile,
-   data.json, verdicts) so agents return structured data, not prose.
-3. **Wire it into SKILL.md** — when a product arrives, run invocation 1; on approval, invocation 2.
-4. **Add budget caps** — skeptic count + research depth scale to the token target; Phase E capped.
-5. **Dry-run** on a real product, tune, done.
-
-> Orchestration spawns many subagents and costs real tokens — I'll confirm before launching each
-> invocation.
-
 ## Status
 - ✅ Renderer + design system + example page (verified end-to-end).
 - ✅ Single-pass workflow encoded as the skill's defaults.
 - ✅ Multi-agent architecture designed → [ARCHITECTURE.md](ARCHITECTURE.md).
-- ⏳ **Next:** build the orchestration script (steps above), then you share the product and we run it.
+- ✅ **Orchestration script built** → `scripts/competitor_workflow.js` (Phases A–E, two-stage,
+  schema-validated, syntax-checked). Methodology grounded in research → `references/methodology.md`.
+  Structural guards baked in: provenance (cite-or-void), home-team-bias (our "ahead" only if no rival
+  matches), adversarial skeptics per claim.
+- ⏳ **Next:** you share the product → I run **Discover**, show you the top 2, then **Build + render**.
+
+> Orchestration spawns many subagents and costs real tokens — I'll confirm before launching each stage.
