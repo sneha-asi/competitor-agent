@@ -15,7 +15,8 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
 
-load_dotenv(pathlib.Path(__file__).resolve().parents[1] / ".env")
+ENV_PATH = pathlib.Path(__file__).resolve().parents[1] / ".env"
+load_dotenv(ENV_PATH)
 
 import pipeline   # noqa: E402
 import render      # noqa: E402
@@ -29,11 +30,18 @@ _client = None
 
 
 def get_client():
-    """Lazily build the Anthropic client so a missing key fails per-request, not at import."""
+    """Lazily build the Anthropic client. If the key is missing, re-read .env (so adding it after
+    the server is already running just works), and fail with a clear message if it's still absent."""
     global _client
     if _client is None:
+        import os
         from anthropic import AsyncAnthropic
-        _client = AsyncAnthropic()  # reads ANTHROPIC_API_KEY from env
+        if not os.environ.get("ANTHROPIC_API_KEY"):
+            load_dotenv(ENV_PATH, override=True)  # pick up a key added to .env after startup
+        key = os.environ.get("ANTHROPIC_API_KEY")
+        if not key:
+            raise RuntimeError("ANTHROPIC_API_KEY is not set — add it to app/.env (no restart needed).")
+        _client = AsyncAnthropic(api_key=key)
     return _client
 
 
