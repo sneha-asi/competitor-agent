@@ -85,7 +85,11 @@ async def _stream(make_coro):
     task = asyncio.create_task(runner())
     try:
         while True:
-            event = await queue.get()
+            try:
+                event = await asyncio.wait_for(queue.get(), timeout=15)
+            except asyncio.TimeoutError:
+                yield ": keepalive\n\n"  # keep the connection alive through long, quiet phases
+                continue
             if event is None:
                 break
             yield _sse(event)

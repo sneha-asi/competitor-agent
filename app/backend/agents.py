@@ -7,6 +7,7 @@
   structured output is skipped for them (it 400s alongside citations), so they're asked for JSON
   and parsed tolerantly. pause_turn (server-tool loop) is resumed automatically.
 """
+import asyncio
 import json
 import os
 import pathlib
@@ -16,6 +17,10 @@ _AGENTS_DIR = pathlib.Path(__file__).resolve().parents[2] / "agents"
 
 MODEL = os.environ.get("COMPETITOR_MODEL", "claude-opus-4-8")
 EFFORT = os.environ.get("COMPETITOR_EFFORT", "high")
+
+# Cap how many agent calls hit the API at once, so a big fan-out (10+ web-search agents)
+# doesn't spike memory/connections and get the process killed.
+_sem = asyncio.Semaphore(int(os.environ.get("COMPETITOR_CONCURRENCY", "4")))
 
 WEB_TOOLS = [
     {"type": "web_search_20260209", "name": "web_search"},
@@ -52,36 +57,43 @@ async def call_agent(client, agent_name, task, *, schema=None, use_web=False,
                      effort=None, max_tokens=16000):
     """Run one agent. Returns parsed JSON (dict) when a schema is given, else the text."""
     sys_text = system_prompt(agent_name)
-    output_config = {"effort": effort or EFFORT}
     strict = schema is not None and not use_web
+    output_config = {}
     if strict:
         output_config["format"] = {"type": "json_schema", "schema": schema}
     elif schema is not None:
         task = (task + "\n\nReturn ONLY a JSON object (no prose, no markdown fence) with these "
                 "top-level keys: " + ", ".join(schema.get("properties", {}).keys()) + ".")
 
+    # Haiku 4.5 supports neither adaptive thinking nor the effort parameter; Opus/Sonnet-4.6 do.
+    thinks = "haiku" not in MODEL
+    if thinks:
+        output_config["effort"] = effort or EFFORT
+
     kwargs = dict(
         model=MODEL,
         max_tokens=max_tokens,
         system=[{"type": "text", "text": sys_text, "cache_control": {"type": "ephemeral"}}],
-        thinking={"type": "adaptive"},
-        output_config=output_config,
         messages=[{"role": "user", "content": task}],
     )
+    if thinks:
+        kwargs["thinking"] = {"type": "adaptive"}
+    if output_config:
+        kwargs["output_config"] = output_config
     if use_web:
         kwargs["tools"] = WEB_TOOLS
 
-    response = await client.messages.create(**kwargs)
-
-    # Resume the server-tool loop if it paused (web_search/web_fetch iteration cap).
-    guard = 0
-    while response.stop_reason == "pause_turn" and guard < 6:
-        guard += 1
-        kwargs["messages"] = [
-            {"role": "user", "content": task},
-            {"role": "assistant", "content": response.content},
-        ]
+    async with _sem:
         response = await client.messages.create(**kwargs)
+        # Resume the server-tool loop if it paused (web_search/web_fetch iteration cap).
+        guard = 0
+        while response.stop_reason == "pause_turn" and guard < 6:
+            guard += 1
+            kwargs["messages"] = [
+                {"role": "user", "content": task},
+                {"role": "assistant", "content": response.content},
+            ]
+            response = await client.messages.create(**kwargs)
 
     text = "".join(b.text for b in response.content if getattr(b, "type", None) == "text")
     if schema is None:
