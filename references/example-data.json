@@ -1,0 +1,153 @@
+{
+  "_comment": "WORKED EXAMPLE / renderer fixture, modeled on the original nuPilot page. Not a freshly-researched analysis — when you run the skill for real, replace every value and ground competitor claims in real sources.",
+  "meta": {
+    "org": "nuPilot",
+    "date_label": "May 2026 · Internal",
+    "author": "Sneha Gupta"
+  },
+  "product": {
+    "name": "Campaign Studio",
+    "short_name": "Campaign Studio",
+    "category_label": "AI campaign execution",
+    "money_question": "How do I write one campaign brief, run it across thousands of customers, and watch every step live?",
+    "signature": "Live run tracking + reproducible campaign versions + human approval gates",
+    "footprint": [{"label": "Foundation", "value": "Owned"}, {"label": "Edge", "value": "Rigor"}],
+    "url": "https://nupilot.example.com"
+  },
+  "competitors": [
+    {
+      "name": "Jasper.ai",
+      "short_name": "Jasper",
+      "category_label": "Enterprise content",
+      "money_question": "How do I produce 7,500 brand-safe product descriptions in 24 hours?",
+      "signature": "Jasper IQ + Grid + 100+ specialized agents",
+      "footprint": [{"label": "Customers", "value": "Enterprise"}, {"label": "AI surface", "value": "Content"}],
+      "sources": ["https://www.jasper.ai/", "https://www.jasper.ai/blog/april-2026-product-update"]
+    },
+    {
+      "name": "Skai.io",
+      "short_name": "Skai",
+      "category_label": "Commerce media",
+      "money_question": "How do I optimize bids and budgets across 100+ retail networks in real time?",
+      "signature": "Celeste AI + Portfolio Navigator + 8,200+ brands",
+      "footprint": [{"label": "Networks", "value": "100+"}, {"label": "Brands", "value": "8,200+"}],
+      "sources": ["https://skai.io/", "https://skai.io/retail-media-solutions/"]
+    }
+  ],
+  "hero": {
+    "kicker": "Competitive Intelligence",
+    "tagline": "Where we lead, where we lag, and what to build next.",
+    "subtitle": "A grounded analysis of nuPilot Campaign Studio against the two enterprise AI marketing platforms our buyers benchmark against in 2026."
+  },
+  "tldr": {
+    "lead_in": "The honest read",
+    "sub": "What's actually true once you read the matrix in Section 04.",
+    "paragraphs": [
+      "Campaign Studio is <strong style=\"color:#111\">not</strong> sitting in the middle of Jasper and Skai. It looks like Jasper on the surface (content, workflows, brand, approvals) and runs like Skai underneath, with scale, reliability, and governance baked in. But it doesn't yet own the <strong style=\"color:#111\">features</strong> customers actually buy from either platform.",
+      "It owns the <strong style=\"color:#111\">foundation</strong> they sit on. Reproducibility, live tracking, approval gates, encrypted credentials, tenant isolation. These are the bones; the muscle on top is the work for the next two quarters."
+    ],
+    "chips": [
+      {"tone": "green", "icon": "check", "title": "Foundation owned", "body": "Live tracking · approval gates · reproducibility · encryption · isolation"},
+      {"tone": "blue", "icon": "trending", "title": "Closeable in 1 qtr", "body": "AI search score · URL→brand · content packs · UTM · comparison view"},
+      {"tone": "amber", "icon": "alert", "title": "Need a call", "body": "Bidding · retail breadth · SOC 2 · in-product chat"}
+    ]
+  },
+  "matrix": {
+    "glance_notes": [
+      {"name": "Jasper", "count": "13/19", "title": "Jasper leads on content", "body": "Brand voice, content generation, AI search readiness, all built and shipping."},
+      {"name": "Skai", "count": "10/19", "title": "Skai leads on commerce", "body": "Bidding, budget pacing, retail networks, attribution — the money layer."},
+      {"name": "Campaign Studio", "count": "9/19", "title": "Campaign Studio leads on rigor", "body": "Live tracking, human approval, reproducibility, isolation."}
+    ],
+    "capabilities": [
+      {"name": "Brand voice & guidelines", "reality": "We can store voice, look, and pillars. We can't yet enforce them at generation time.",
+       "verdicts": {"Jasper.ai": {"status": "owned"}, "Skai.io": {"status": "gap"}, "Campaign Studio": {"status": "partial"}}},
+      {"name": "One-click brand from a URL", "reality": "Jasper scrapes a company website and builds the brand profile. We start blank.",
+       "verdicts": {"Jasper.ai": {"status": "owned"}, "Skai.io": {"status": "gap"}, "Campaign Studio": {"status": "gap"}}},
+      {"name": "AI search readiness score", "reality": "Jasper grades content for AI search before publish. We don't score yet.",
+       "verdicts": {"Jasper.ai": {"status": "owned"}, "Skai.io": {"status": "gap"}, "Campaign Studio": {"status": "gap"}}},
+      {"name": "Bulk content packs", "reality": "One brief to many assets. Jasper ships templates; we run it manually.",
+       "verdicts": {"Jasper.ai": {"status": "owned"}, "Skai.io": {"status": "gap"}, "Campaign Studio": {"status": "partial"}}},
+      {"name": "Content generation at scale", "reality": "Both Jasper and we generate at volume; Skai is not a content tool.",
+       "verdicts": {"Jasper.ai": {"status": "owned"}, "Skai.io": {"status": "gap"}, "Campaign Studio": {"status": "owned"}}},
+      {"name": "Bid optimization", "reality": "Skai has 15 years of ML bidding. Neither Jasper nor we play here.",
+       "verdicts": {"Jasper.ai": {"status": "gap"}, "Skai.io": {"status": "owned"}, "Campaign Studio": {"status": "gap"}}},
+      {"name": "Budget pacing", "reality": "Skai paces spend across networks live. We can cap, not pace.",
+       "verdicts": {"Jasper.ai": {"status": "gap"}, "Skai.io": {"status": "owned"}, "Campaign Studio": {"status": "partial"}}},
+      {"name": "Retail network breadth", "reality": "Skai integrates 100+ networks. We integrate the few our buyers use.",
+       "verdicts": {"Jasper.ai": {"status": "gap"}, "Skai.io": {"status": "owned"}, "Campaign Studio": {"status": "gap"}}},
+      {"name": "Attribution & measurement", "reality": "Skai owns this; Jasper and we report at the campaign level only.",
+       "verdicts": {"Jasper.ai": {"status": "partial"}, "Skai.io": {"status": "owned"}, "Campaign Studio": {"status": "partial"}}},
+      {"name": "Live run tracking", "reality": "Watch every step as it happens, resumes cleanly across devices. Ours alone.",
+       "verdicts": {"Jasper.ai": {"status": "gap"}, "Skai.io": {"status": "partial"}, "Campaign Studio": {"status": "ahead"}}},
+      {"name": "Human approval gates", "reality": "Approve, reject, or rewrite a step mid-run with a recorded decision.",
+       "verdicts": {"Jasper.ai": {"status": "partial"}, "Skai.io": {"status": "gap"}, "Campaign Studio": {"status": "ahead"}}},
+      {"name": "Reproducible campaigns", "reality": "Re-run next month, get an identical result. Neither competitor guarantees this.",
+       "verdicts": {"Jasper.ai": {"status": "gap"}, "Skai.io": {"status": "gap"}, "Campaign Studio": {"status": "ahead"}}},
+      {"name": "Multi-tenant isolation", "reality": "Data, spend, and limits walled off per customer from day one.",
+       "verdicts": {"Jasper.ai": {"status": "partial"}, "Skai.io": {"status": "owned"}, "Campaign Studio": {"status": "ahead"}}},
+      {"name": "Connector auto-recovery", "reality": "Connectors detect outages, hold, probe, and resume with no operator.",
+       "verdicts": {"Jasper.ai": {"status": "gap"}, "Skai.io": {"status": "partial"}, "Campaign Studio": {"status": "ahead"}}}
+    ]
+  },
+  "ahead": {
+    "sub": "Engineering moats Jasper and Skai don't trivially copy. Defend these; they're the wedge for enterprise sales.",
+    "items": [
+      {"title": "Reproducible campaigns", "body": "Re-run the same campaign next month and get an identical result. Neither Jasper nor Skai offers this guarantee."},
+      {"title": "Live run tracking", "body": "Watch every campaign step as it happens. Refresh, drop network, switch devices, the view resumes cleanly."},
+      {"title": "Human approval gates", "body": "A reviewer can approve, reject, or rewrite a step mid-campaign. The workflow pauses, the decision is recorded, execution resumes."},
+      {"title": "Connector reliability", "body": "When a vendor goes down or a credential expires, our connectors detect, hold, probe for recovery, and resume, with no operator intervention."},
+      {"title": "Enterprise-grade isolation", "body": "Every customer's data, spend, and limits walled off from day one. No retrofitting needed for compliance."}
+    ]
+  },
+  "closeable": {
+    "sub": "Each gap maps to existing schema or services. Six items, all shippable inside thirteen weeks.",
+    "items": [
+      {"title": "AI search readiness score", "desc": "A scorer that grades content against AI search guidelines before publish", "effort": "2–3 wks", "priority": "HIGH", "effort_level": "low", "value": "high"},
+      {"title": "One-click brand from URL", "desc": "Scrape a company website and auto-fill brand voice, audience, and knowledge base", "effort": "3–4 wks", "priority": "HIGH", "effort_level": "med", "value": "high"},
+      {"title": "Bulk content-pack template", "desc": "One brief in → blog post, social captions, newsletter, and ad script out, in one run", "effort": "2 wks", "priority": "HIGH", "effort_level": "low", "value": "high"},
+      {"title": "Campaign comparison dashboard", "desc": "Side-by-side view of cost, completion rate, and outcomes across campaigns", "effort": "2 wks", "priority": "MEDIUM", "effort_level": "low", "value": "med"},
+      {"title": "Finish AI tool refresh", "desc": "The last piece of plumbing to keep connected vendor tools auto-updated", "effort": "3 days", "priority": "MEDIUM", "effort_level": "low", "value": "med"},
+      {"title": "UTM auto-tagging", "desc": "Stamp every campaign output with the right tracking parameters automatically", "effort": "1 wk", "priority": "MEDIUM", "effort_level": "low", "value": "med"}
+    ]
+  },
+  "decisions": {
+    "sub": "Not engineering tasks. These get decided in a leadership room, not a sprint.",
+    "items": [
+      {"title": "Bidding", "body": "Do we play in bid optimization at all? Skai has fifteen years of ML bidding behind their engine. We'd be three engineers deep before we caught up."},
+      {"title": "Retail networks", "body": "Match Skai's 100+ network coverage, or pick the three our buyers actually use? This is a partnerships problem, not a coding one."},
+      {"title": "SOC 2", "body": "When does SOC 2 stop being optional? Six months and roughly $60k once we start. The trigger is usually the first enterprise procurement call."},
+      {"title": "In-product chat", "body": "Do we build chat at all, or assume buyers will use ChatGPT alongside us? Only the brand-aware version is worth building."}
+    ]
+  },
+  "positioning": {
+    "sub": "The one paragraph to keep in your head after closing this doc.",
+    "stats": [
+      {"tone": "blue", "value": "Underneath", "label": "Where we sit"},
+      {"tone": "green", "value": "Foundation", "label": "What we own"},
+      {"tone": "amber", "value": "2 qtrs", "label": "To parity"}
+    ],
+    "paragraphs": [
+      "Campaign Studio is <strong>not</strong> sitting between Jasper and Skai. It is <strong>the execution platform underneath them that neither one offers:</strong> live tracking, multi-tenant from day one, encrypted credentials per customer, human approval gates, and reproducible campaigns.",
+      "Jasper sits <em>above</em> a platform like this and bundles a polished content interface on top. Skai sits <em>beside</em> it and sells media buying. The real position:"
+    ],
+    "pullquote": "Jasper's content intelligence on Skai's enterprise reliability, with an open connector model.",
+    "closing": "Three things stand between us and saying that out loud. We need brand-from-URL, an AI search readiness score, and bulk content packs before we can stand next to Jasper. On Skai's side, the call isn't engineering. It's whether we want to play in bidding at all.",
+    "checklists": [
+      {"title": "To match Jasper", "marker": "→", "marker_color": "#245AE2", "items": ["One-click brand from URL", "AI search readiness scoring", "Bulk content packs"]},
+      {"title": "To match Skai", "marker": "?", "marker_color": "#D97706", "items": ["Bid optimization (decide first)", "Retail network breadth (decide)"]},
+      {"title": "Already ours", "tone": "green", "marker": "✓", "items": ["Live tracking · approvals · reproducibility", "Encryption · tenant isolation"]}
+    ]
+  },
+  "sources": {
+    "external": [
+      {"label": "Skai homepage", "url": "https://skai.io/"},
+      {"label": "Skai retail media solutions", "url": "https://skai.io/retail-media-solutions/"},
+      {"label": "Jasper homepage", "url": "https://www.jasper.ai/"},
+      {"label": "Jasper April 2026 product update", "url": "https://www.jasper.ai/blog/april-2026-product-update"}
+    ],
+    "internal": [
+      "nupilot-campaign-studio/docs/architecture/overview.md",
+      "docs/features/ (13 feature docs)"
+    ]
+  }
+}
