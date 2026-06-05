@@ -6,6 +6,9 @@ frontend over SSE. Phase F (render) is done by the caller via render.py.
 import asyncio
 import os
 import pathlib
+import shutil
+import subprocess
+import tempfile
 
 import agents
 import schemas
@@ -33,35 +36,84 @@ async def _progress(emit, phase, message):
 
 
 # ----------------------------------------------------------------- product material intake
-_REPO_GLOBS = ["README*", "readme*", "package.json", "pyproject.toml", "setup.py",
-               "requirements.txt", "Cargo.toml", "go.mod", "docs/*.md", "*.md"]
+_DOC_GLOBS = ["README*", "*.md", "package.json", "pyproject.toml", "setup.py", "setup.cfg",
+              "requirements*.txt", "Cargo.toml", "go.mod", "pom.xml", "build.gradle",
+              "Dockerfile", "docker-compose*.yml", "*.toml", "openapi*.y*ml"]
+_SRC_EXT = {".py", ".ts", ".tsx", ".js", ".jsx", ".go", ".rs", ".java", ".rb", ".php", ".kt"}
+_BUDGET = 75000
+
+
+def _read_repo(root: pathlib.Path) -> str:
+    """Read a repo into one text blob: file tree + docs/manifests + a sample of source."""
+    if not root.exists():
+        return ""
+    parts, used = [], 0
+    # 1) file tree (gives the agent the shape of the codebase)
+    try:
+        tree = subprocess.run(["git", "-C", str(root), "ls-files"],
+                              capture_output=True, text=True, timeout=20).stdout.strip()
+    except Exception:
+        tree = ""
+    files = tree.splitlines() if tree else [str(p.relative_to(root)) for p in root.rglob("*") if p.is_file()]
+    files = [f for f in files if "/.git/" not in f and not f.startswith(".git/")]
+    parts.append(f"### REPO FILE TREE ({len(files)} files)\n" + "\n".join(files[:300]))
+    used += len(parts[-1])
+    # 2) docs + manifests (what it says it is)
+    docs = []
+    for pat in _DOC_GLOBS:
+        docs += [p for p in root.glob(pat) if p.is_file()]
+    docs += [p for p in root.glob("docs/**/*.md") if p.is_file()]
+    for p in list(dict.fromkeys(docs))[:30]:
+        if used > _BUDGET:
+            break
+        body = p.read_text(encoding="utf-8", errors="ignore")[:8000]
+        parts.append(f"### {p.relative_to(root)}\n{body}")
+        used += len(body)
+    # 3) a sample of source files (what it actually does), shallowest first
+    src = sorted((p for p in root.rglob("*")
+                  if p.is_file() and p.suffix in _SRC_EXT and "/.git/" not in str(p)
+                  and "node_modules" not in p.parts and ".venv" not in p.parts),
+                 key=lambda p: (len(p.parts), str(p)))
+    for p in src[:15]:
+        if used > _BUDGET:
+            break
+        body = p.read_text(encoding="utf-8", errors="ignore")[:4000]
+        parts.append(f"### {p.relative_to(root)}\n{body}")
+        used += len(body)
+    return "\n\n".join(parts)[:_BUDGET]
 
 
 def gather_material(product: dict):
-    """Return (material_text_or_None, is_url). URLs are researched by the agent via web_fetch."""
+    """Return (material_text_or_None, is_url). Plain URLs are researched by the agent via
+    web_fetch; a repo (local path OR a git/GitHub URL we clone) is read into text here."""
     kind = (product.get("kind") or "text").lower()
-    ref = product.get("ref", "")
-    if kind == "url" or ref.startswith("http"):
+    ref = (product.get("ref") or "").strip()
+    if kind == "url" or (kind != "repo" and ref.startswith("http")):
         return None, True
     if kind in ("text", "doc"):
         p = pathlib.Path(ref)
         if kind == "doc" and p.exists():
-            return p.read_text(encoding="utf-8", errors="ignore")[:60000], False
-        return ref[:60000], False
+            return p.read_text(encoding="utf-8", errors="ignore")[:_BUDGET], False
+        return ref[:_BUDGET], False
     if kind == "repo":
-        root = pathlib.Path(ref)
-        chunks, total = [], 0
-        if root.exists():
-            seen = set()
-            for pat in _REPO_GLOBS:
-                for f in sorted(root.glob(pat))[:20]:
-                    if f.is_file() and f not in seen and total < 50000:
-                        seen.add(f)
-                        body = f.read_text(encoding="utf-8", errors="ignore")[:8000]
-                        chunks.append(f"### {f.relative_to(root)}\n{body}")
-                        total += len(body)
-        return ("\n\n".join(chunks) or ref)[:60000], False
-    return ref[:60000], False
+        is_git_url = ref.endswith(".git") or ref.startswith(("http://", "https://", "git@"))
+        if is_git_url:
+            tmp = tempfile.mkdtemp(prefix="competitor-repo-")
+            try:
+                subprocess.run(["git", "clone", "--depth", "1", ref, tmp],
+                               check=True, capture_output=True, timeout=180)
+                return (_read_repo(pathlib.Path(tmp)) or f"(cloned {ref} but found no readable files)"), False
+            except subprocess.CalledProcessError as e:
+                err = (e.stderr or b"").decode(errors="ignore").strip()[:400]
+                return (f"(could not clone {ref} — {err or 'git clone failed'}. "
+                        f"If it's private, make sure this machine has git access, or clone it locally "
+                        f"and pass the folder path instead.)"), False
+            except Exception as e:
+                return f"(could not clone {ref} — {e})", False
+            finally:
+                shutil.rmtree(tmp, ignore_errors=True)
+        return (_read_repo(pathlib.Path(ref)) or ref)[:_BUDGET], False
+    return ref[:_BUDGET], False
 
 
 def _platform_names(product_profile, competitors):
@@ -70,10 +122,11 @@ def _platform_names(product_profile, competitors):
 
 # ----------------------------------------------------------------- Phase A + B (discover)
 async def discover(client, product: dict, emit):
-    material, is_url = gather_material(product)
-    notes = ("\nUser notes: " + product["notes"]) if product.get("notes") else ""
-
     await _progress(emit, "Intake", "Reading the product…")
+    material, is_url = await asyncio.to_thread(gather_material, product)
+    notes = ("\nUser notes: " + product["notes"]) if product.get("notes") else ""
+    if material and material.startswith("(could not clone"):
+        await _progress(emit, "Intake", "⚠ " + material)
     if is_url:
         url = product["ref"]
         reader_tasks = [

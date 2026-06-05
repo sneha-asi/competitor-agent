@@ -30,7 +30,7 @@ const KINDS = [
   { v: 'url', label: 'Website' }, { v: 'repo', label: 'Repo' },
   { v: 'doc', label: 'Doc' }, { v: 'text', label: 'Describe' },
 ]
-const PLACEHOLDER = { url: 'https://yourproduct.com', repo: '/path/to/repo', doc: '/path/to/brief.md', text: 'What it does, who it’s for, the problem it solves…' }
+const PLACEHOLDER = { url: 'https://yourproduct.com', repo: '/path/to/repo  or  https://github.com/org/repo (cloned locally)', doc: '/path/to/brief.md', text: 'What it does, who it’s for, the problem it solves…' }
 const MODELS = [
   { v: 'claude-opus-4-8', label: 'Claude Opus 4.8 — most capable' },
   { v: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6 — ~40% cheaper' },
