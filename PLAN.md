@@ -1,74 +1,62 @@
-# Plan & Roadmap
+# Plan
 
-The product vision, the principles it's built on, and where it's headed. Design internals live in
-[ARCHITECTURE.md](ARCHITECTURE.md); this is the "what and why."
+Where this is headed and why it's built the way it is. The actual design — agents, data contracts, the verification gate — is in [ARCHITECTURE.md](ARCHITECTURE.md). This is the higher-level stuff.
 
----
+## What I'm actually building
 
-## Vision
+One product in, a competitive analysis out, that I'd be fine putting in front of a board or a sales team without caveating half of it. That means two things at once: it has to be thorough, and it has to be honest about what it doesn't know. Most tools pick one. This is the whole point of the project.
 
-One input — a product — becomes a **sourced, board-ready competitive briefing** against its top
-market rivals, with zero manual research. The bar is *exhaustive and defensible*: a document a
-founder or PM can put in front of a board or a sales team and stand behind line by line.
+## The rules it's built around
 
-## Principles
-
-1. **No fabricated data.** Every competitor claim traces to a real source; the unverifiable is
-   marked `unknown`, never guessed. Enforced in code (cite-or-void) and by an adversarial gate.
-2. **Self-critical, not marketing.** Real gaps and open questions are the point. Our own `ahead`
-   only counts where no rival matches us.
-3. **Our side is never invented.** Capabilities come only from the user's materials.
-4. **Human in the loop at the expensive turns.** Confirm the product understanding; approve the
-   top 2 rivals — before any deep research spends tokens.
-5. **Deterministic where it should be.** Research and judgment are model-driven; the final render
-   is a deterministic template, so the artifact is consistent every time.
+- **No made-up data.** Every competitor claim points to a real source. Anything it can't verify is marked unknown, not guessed. Enforced in code and by the agents that try to refute each claim.
+- **It stays self-critical.** Real gaps and open questions are the deliverable, not an afterthought. Our own "ahead" only counts where no rival matches us.
+- **Our side is never invented.** Whatever it says about your product comes only from what you handed it.
+- **I stay in the loop on the expensive calls.** Confirm what the product is, approve the two competitors — both before any deep research burns tokens.
+- **Deterministic where it should be.** The research and judgment are the model's job; the final render is a fixed template, so the report comes out the same shape every time.
 
 ## How a run goes
 
 ```
-A · Intake ──▶ [confirm product] ──▶ B · Discovery ──▶ [approve top 2]
-   ──▶ C · Deep research ──▶ D · Synthesis ──▶ E · Verify (gate) ──▶ F · Render
+Intake → [confirm product] → Discovery → [approve top 2]
+       → Research → Synthesis → Verify → Render
 ```
 
-Two surfaces, same fleet and same renderer: the **`/competitor` Claude Code skill** (zero setup,
-session model) and the **standalone web app** (self-serve, Anthropic API). See
-[README.md](README.md) for both.
+Same agents and same renderer behind two front doors: the `/competitor` skill (zero setup, runs in Claude Code) and the standalone web app (runs on the Anthropic API). Both are covered in the [README](README.md).
 
-## Decisions (locked)
+## Decisions already made
 
-| Decision | Choice |
-|----------|--------|
-| Analysis depth | Exhaustive — full matrix, all sections, every claim sourced |
-| "Biggest" rivals | Ranked by **market leadership** |
-| Human gate | Confirm the top 2 before deep research |
-| Competitor count | 2 (default) |
-| Orchestration | Fan-out per phase → converge, gated by adversarial verification |
+- Depth: exhaustive — full matrix, all sections, every claim sourced.
+- "Biggest" competitors means ranked by market leadership, not whoever's closest.
+- Always confirm the top two before researching.
+- Two competitors by default.
+- Orchestration: agents fan out per phase and converge, with the verification gate at the end.
 
----
+## Where it's at
 
-## Status
+Done:
 
-**Shipped**
-- ✅ Deterministic renderer + extracted design system, verified visually end-to-end.
-- ✅ The 9-agent fleet — individual definitions, installable as live subagents.
-- ✅ Orchestrator (Phases A–E), schema-validated, with cite-or-void and home-team-bias guards.
-- ✅ Research-grounded methodology baked into the agent prompts.
-- ✅ Standalone web app — FastAPI backend (compiles) + React/Vite frontend (builds); render path verified.
-- ✅ Docs: README, this plan, architecture, content spec, design tokens, worked example, sample report.
+- the renderer and the design system, checked end to end
+- the nine agents, each its own file, installable as live subagents
+- the orchestrator (phases A–E) with the cite-or-void and home-team-bias guards
+- the research-backed methodology baked into the prompts
+- the web app — FastAPI backend (compiles) and React/Vite frontend (builds), render path verified
+- the docs: this, the README, the architecture write-up, the schema, design tokens, a worked example, a sample report
 
-**Pending**
-- ⏳ First live end-to-end run — needs an `ANTHROPIC_API_KEY` in `app/.env`. This is also the first
-  true integration test of the agent prompts against the real API + web search.
+Not done yet:
 
-## Roadmap
+- a real end-to-end run. Needs an `ANTHROPIC_API_KEY` in `app/.env`. That run is also the first proper test of the prompts against the live API and web search, so I expect to tune things once I see real output.
 
-**Next**
-- Live run on a real product; tune prompts, effort levels, and skeptic counts against real output.
-- Caching of research per competitor so re-runs are cheap and incremental.
-- Configurable competitor count (2 → N) and a "closest head-to-head" ranking mode.
+## What's next
 
-**Later**
-- Persist runs (history + diff): watch a market over time, surface what changed.
-- One-click deploy for the web app (containerized backend + static frontend).
-- Export formats beyond HTML (PDF, slide deck) reusing the same `data.json`.
-- Scheduled re-runs that alert on meaningful competitor changes.
+Soon:
+
+- run it on a real product and tune the prompts, effort levels, and skeptic counts against what actually comes back
+- cache research per competitor so re-runs are cheap
+- let you pick more than two competitors, and add a "closest rival" ranking mode alongside "biggest"
+
+Later:
+
+- keep run history so you can diff a market over time and see what changed
+- one-click deploy for the web app
+- export to PDF or a slide deck from the same data
+- scheduled re-runs that ping you when a competitor changes something that matters

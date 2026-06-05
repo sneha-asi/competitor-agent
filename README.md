@@ -1,126 +1,96 @@
-<div align="center">
-
 # Competitor Agent
 
-**Give it one product. Get a sourced, board-ready competitive analysis.**
+You give it a product. It works out who your two biggest competitors are, researches them properly, and hands back a competitive analysis you can actually trust. Every claim it makes about a competitor links to a real source, and anything it can't pin down it marks as *unknown* instead of making something up.
 
-A multi-agent system that researches a product's top market rivals and renders a polished
-*"where we lead, where we lag, what to build next"* briefing — with every competitor claim
-grounded in a real source and adversarially fact-checked.
+I built this because most "AI competitor analysis" is confident nonsense. Long, polished, and quietly half-invented. This one is built the other way around: it would rather say "couldn't verify this" than fill the gap with a guess.
 
-![Claude Code Skill](https://img.shields.io/badge/Claude_Code-skill-245AE2)
-![Anthropic API](https://img.shields.io/badge/Anthropic-API-D6F549?labelColor=01194C)
-![Python](https://img.shields.io/badge/Python-3.10+-3776AB)
-![React + Vite](https://img.shields.io/badge/React-Vite-61DAFB)
-![No fabricated data](https://img.shields.io/badge/data-cite_or_void-0F9D58)
+<img src="docs/hero.png" alt="A sample report" width="900">
 
-<img src="docs/hero.png" alt="Sample competitive-analysis report" width="900">
-
-<sub><a href="docs/example-report.html">▶ Open the full sample report</a> · the design every run produces</sub>
-
-</div>
-
----
+There's a full sample you can open in a browser: [docs/example-report.html](docs/example-report.html). That's the design every run produces.
 
 ## What it does
 
-Hand it a product — a **URL, a repo, a doc, or a one-paragraph description** — and it:
+Point it at your product (a website, a repo, a doc, or just a paragraph describing it) and it:
 
-1. **Reads your product** and works out what it actually does (your side, never invented).
-2. **Finds the top 2 competitors** in your market by *market leadership*, and checks the picks with you.
-3. **Researches them on the open web** — pricing, docs, positioning, momentum, weaknesses.
-4. **Fact-checks itself** — every competitor claim is attacked by independent skeptics before it ships.
-5. **Renders one self-contained HTML page** — feature matrix, moats, closeable gaps, open questions, positioning thesis, and a sources list.
+- reads your product and figures out what it actually does — only from what you give it, it won't invent features on your behalf
+- searches the market, picks your top two competitors, and checks the picks with you before spending any real time
+- digs into each one: pricing, the actual product, how they position, funding/traction, and where they're weak
+- argues with itself. A separate batch of agents try to *disprove* every competitor claim against the source it came from. Anything that doesn't hold up gets downgraded to unknown.
+- renders the whole thing as one self-contained HTML page you can open anywhere or hand to someone
 
-## Why it's different
+## Two rules I didn't want it to break
 
-Most "AI competitive analysis" produces confident, unsourced fiction. This one is built around two rules:
+1. **No made-up data.** If a claim about a competitor doesn't have a source behind it, it doesn't ship. This is enforced twice over — in code (a cell with no citation gets voided) and by the agents that try to refute each claim.
+2. **It's not a marketing deck.** If you're winning every row of the matrix, something's off. The output is supposed to show you where you're behind and which questions are genuinely undecided, not flatter you. Your own "ahead" only counts on rows where no competitor matches you.
 
-- 🔒 **No fabricated data.** Every competitor claim traces to a real URL. Anything that can't be verified is marked `unknown` — never guessed. Enforced in code (cite-or-void) *and* by an adversarial verification gate.
-- 🪞 **Self-critical, not marketing.** A matrix where you win every row is marketing. The output surfaces real gaps and hard strategic questions — and your own `ahead` only counts where no rival matches you.
+## Running it
 
-That's what makes the result something you can put in front of a board or a sales team and defend line by line.
+Two ways, depending on whether you live in Claude Code or want a real UI.
 
-## Two ways to run it
+**Inside Claude Code** — no setup. Just ask:
 
-### A · As a Claude Code skill (`/competitor`)
+> do a competitor analysis of https://myproduct.com
 
-Zero setup — runs inside Claude Code using the session model and built-in web search.
+It uses the `/competitor` skill in this repo: ingests the product, comes back with the two competitors for you to okay, then researches, verifies, and writes the report. See [SKILL.md](SKILL.md).
 
-```
-You: do a competitor analysis of https://yourproduct.com
-```
-
-It ingests the product, proposes the top 2 rivals for your sign-off, researches and verifies, then writes the HTML. For the exhaustive run it drives a 9-agent fleet via a workflow (see [ARCHITECTURE.md](ARCHITECTURE.md)). Skill entry point: [SKILL.md](SKILL.md).
-
-### B · As a standalone web app
-
-A self-serve product powered by the **Anthropic API** (one key — agents *and* web research).
+**As a web app** — the standalone version, runs on the Anthropic API (one key covers the agents *and* the web search):
 
 ```bash
-cd app && cp .env.example .env        # add ANTHROPIC_API_KEY
+cd app
+cp .env.example .env          # drop your ANTHROPIC_API_KEY in here
 cd backend && pip install -r requirements.txt && uvicorn main:app --port 8000
-cd ../frontend && npm install && npm run dev      # → http://localhost:5173
+cd ../frontend && npm install && npm run dev      # http://localhost:5173
 ```
 
-Enter a product → watch the phases stream live → approve the top 2 → download the report. Full guide: [app/README.md](app/README.md).
+Enter a product, watch the phases stream by, approve the two competitors, download the report. More in [app/README.md](app/README.md).
 
-## How it works
+## How it works, roughly
 
-Phases run in sequence; specialist subagents fan out *inside* each phase and converge. The whole thing is gated on adversarial verification.
-
-```
-A · Intake ──▶ [you confirm product] ──▶ B · Discovery ──▶ [you approve top 2]
-   ──▶ C · Deep research ──▶ D · Synthesis ──▶ E · Verify (gate) ──▶ F · Render
-```
-
-| Phase | Subagents fan out… | …and converge to |
-|-------|--------------------|------------------|
-| **A · Intake** | readers over your product (docs / source / pricing) | one "our side" profile |
-| **B · Discovery** | 4 *blind* market sweeps (alternatives · analysts · funding · community) | top 2 by market leadership |
-| **C · Research** | 5 dimensions × 2 rivals, each web-sourced | a sourced profile per rival |
-| **D · Synthesis** | matrix builder + narrative writer | a draft `data.json` |
-| **E · Verify** | 2–3 skeptics **per claim**, told to *refute* it vs its source | a validated `data.json` |
-| **F · Render** | deterministic | the HTML report |
-
-Full design, data contracts, and the verification gate: **[ARCHITECTURE.md](ARCHITECTURE.md)**.
-
-### The agent fleet
-
-Nine single-purpose agents ([`agents/`](agents/)) — each a standalone Claude Code subagent, reused by both the skill workflow and the web app:
-
-`intake-reader` · `product-synthesizer` · `discovery-scout` · `ranker` · `dimension-researcher` · `profile-synthesizer` · `matrix-builder` · `narrative-writer` · `claim-verifier`
-
-## Project layout
+It runs in phases. Each phase kicks off a few small agents that each go do one thing, then their results get pulled back together before the next phase starts:
 
 ```
-competitor/
-├── SKILL.md                  # the /competitor skill: triggering + workflow
-├── PLAN.md  ·  ARCHITECTURE.md  # roadmap and multi-agent design
-├── agents/                   # the 9 fleet agents (one file each)
-├── scripts/
-│   ├── build_page.py         # data.json → styled HTML (the renderer)
-│   ├── competitor_workflow.js# the orchestrator (Phases A–E)
-│   └── install-agents.sh     # register the agents as live subagents
-├── assets/base.css           # extracted design system (inlined into every report)
-├── references/               # data schema, research methodology, design tokens, worked example
-├── app/                      # standalone web app (FastAPI backend + React/Vite frontend)
-└── docs/                     # sample report + hero image
+Intake  →  [you confirm the product]  →  Discovery  →  [you approve the top 2]
+        →  Research  →  Synthesis  →  Verify  →  Render
 ```
 
-## Configuration
+- **Intake / Discovery** read your product and find the rivals (four blind searches from different angles, then a ranker picks the two biggest).
+- **Research** is five angles per competitor — pricing, features, positioning, momentum, weaknesses — all web-sourced.
+- **Synthesis** turns the sourced profiles into the feature matrix and the writing around it.
+- **Verify** is the part I care about most: two or three skeptics per claim, each told to refute it against its source. Majority can't back it up, it becomes unknown.
+- **Render** is deterministic — no model touches the final HTML, so it comes out the same shape every time.
 
-The skill uses your Claude Code session. The app reads from `app/.env`:
+If you want the actual design (data contracts, the verification gate, all nine agents), it's written up in [ARCHITECTURE.md](ARCHITECTURE.md).
 
-| Variable | Default | Notes |
-|----------|---------|-------|
-| `ANTHROPIC_API_KEY` | — | required for the app |
-| `COMPETITOR_MODEL` | `claude-opus-4-8` | set `claude-sonnet-4-6` to cut cost ~40% |
-| `COMPETITOR_EFFORT` | `high` | `low` · `medium` · `high` · `xhigh` · `max` |
-| `COMPETITOR_SKEPTICS` | `2` | verifiers per claim (Phase E) |
+The nine agents live in [`agents/`](agents/), one file each, and both the skill and the web app reuse them:
+`intake-reader`, `product-synthesizer`, `discovery-scout`, `ranker`, `dimension-researcher`, `profile-synthesizer`, `matrix-builder`, `narrative-writer`, `claim-verifier`.
 
-A full app run spawns ~20 web-enabled agent calls, so it uses real tokens — scale with the knobs above.
+## What's in here
 
-## Status & roadmap
+```
+SKILL.md                     the /competitor skill (how it triggers, the workflow)
+PLAN.md  ARCHITECTURE.md      where it's going, and how it's built
+agents/                      the nine agents, one file each
+scripts/
+  build_page.py              data.json -> the styled HTML report
+  competitor_workflow.js     the orchestrator (phases A-E)
+  install-agents.sh          registers the agents as live Claude Code subagents
+assets/base.css              the design system, inlined into every report
+references/                  data schema, research method, design tokens, a worked example
+app/                         the standalone web app (FastAPI + React/Vite)
+docs/                        the sample report and the screenshot above
+```
 
-Working today: the renderer + design system, the 9 agents, the orchestrator, and the web app (backend compiles, frontend builds, render path verified). The live end-to-end run is pending an API key. Full roadmap: **[PLAN.md](PLAN.md)**.
+## Config
+
+The skill just uses your Claude Code session. The web app reads `app/.env`:
+
+- `ANTHROPIC_API_KEY` — required for the app
+- `COMPETITOR_MODEL` — defaults to `claude-opus-4-8`; set `claude-sonnet-4-6` if you want it cheaper
+- `COMPETITOR_EFFORT` — `low` / `medium` / `high` / `xhigh` / `max`
+- `COMPETITOR_SKEPTICS` — how many verifiers per claim (default 2)
+
+Heads up: a full app run fires off around twenty web-enabled agent calls, so it does cost real tokens. The knobs above are how you keep that in check.
+
+## Status
+
+The renderer, the design system, the nine agents, the orchestrator, and the web app are all in place — backend compiles, frontend builds, and the render path is verified against the sample data. The one thing left is a real end-to-end run, which needs an API key. The roadmap's in [PLAN.md](PLAN.md).
