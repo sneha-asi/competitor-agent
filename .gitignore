@@ -12,3 +12,8 @@ __pycache__/
 
 # Scratch data for real runs (the schema lives in references/example-data.json)
 /data.json
+
+# Standalone app
+.env
+app/frontend/node_modules/
+app/frontend/dist/
