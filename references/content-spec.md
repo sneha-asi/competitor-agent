@@ -21,15 +21,15 @@ you can omit sections you don't have. Fields marked HTML-ok may contain inline t
 ```jsonc
 {
   "meta": {
-    "org": "nuPilot",                 // brand: header top-left + footer
+    "org": "Acme AI",                 // brand: header top-left + footer
     "date_label": "May 2026 · Internal",
     "author": "Sneha Gupta",          // footer "prepared by"
     "analyst_note": "what wasn't verifiable, recency of research"   // optional, for your record
   },
 
   "product": {                        // OUR product (always rendered last / highlighted)
-    "name": "Campaign Studio",
-    "short_name": "Campaign Studio",  // used in matrix column + chart axis
+    "name": "Acme Outreach",
+    "short_name": "Acme Outreach",  // used in matrix column + chart axis
     "category_label": "AI campaign execution",  // colored chip on the player card
     "money_question": "How do I ...?",           // the italic quote
     "signature": "Live run tracking + ...",      // signature capability line
@@ -77,7 +77,7 @@ you can omit sections you don't have. Fields marked HTML-ok may contain inline t
         "verdicts": {                 // one key per product AND per competitor, by exact `name`
           "Jasper.ai":      {"status":"owned",   "source":"https://..."},
           "Skai.io":        {"status":"gap",     "source":"https://..."},
-          "Campaign Studio":{"status":"partial"}                       // our own verdicts need no source
+          "Acme Outreach":{"status":"partial"}                       // our own verdicts need no source
         }
       }
     ]
