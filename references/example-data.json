@@ -1,0 +1,153 @@
+{
+  "_comment": "WORKED EXAMPLE / renderer fixture — a fully fictional sample (Acme Outreach) used only to demo the renderer. Not a real analysis. When you run the skill for real, replace every value and ground all competitor claims in real, cited sources.",
+  "meta": {
+    "org": "Acme AI",
+    "date_label": "2026 · Sample",
+    "author": "Sample report"
+  },
+  "product": {
+    "name": "Acme Outreach",
+    "short_name": "Acme Outreach",
+    "category_label": "AI sales outreach",
+    "money_question": "How do I personalize outreach to thousands of leads and keep every rep's follow-ups on track?",
+    "signature": "Live sequence tracking + reproducible playbooks + human approval gates",
+    "footprint": [{"label": "Foundation", "value": "Owned"}, {"label": "Edge", "value": "Rigor"}],
+    "url": "https://acme.example.com"
+  },
+  "competitors": [
+    {
+      "name": "Brandly",
+      "short_name": "Brandly",
+      "category_label": "Content generation",
+      "money_question": "How do I produce thousands of brand-safe messages in a day?",
+      "signature": "Brand voice engine + template library + content scoring",
+      "footprint": [{"label": "Customers", "value": "Mid-market"}, {"label": "AI surface", "value": "Content"}],
+      "sources": ["https://example.com/brandly", "https://example.com/brandly/product"]
+    },
+    {
+      "name": "Bidwise",
+      "short_name": "Bidwise",
+      "category_label": "Ad optimization",
+      "money_question": "How do I optimize bids and budgets across dozens of channels in real time?",
+      "signature": "Bid engine + budget pacing + 50+ channel integrations",
+      "footprint": [{"label": "Channels", "value": "50+"}, {"label": "Brands", "value": "2,000+"}],
+      "sources": ["https://example.com/bidwise", "https://example.com/bidwise/solutions"]
+    }
+  ],
+  "hero": {
+    "kicker": "Competitive Intelligence",
+    "tagline": "Where we lead, where we lag, and what to build next.",
+    "subtitle": "A sample analysis of Acme Outreach against two fictional platforms, included only to demonstrate the report format."
+  },
+  "tldr": {
+    "lead_in": "The honest read",
+    "sub": "What's actually true once you read the matrix in Section 04.",
+    "paragraphs": [
+      "Acme Outreach is <strong style=\"color:#111\">not</strong> sitting in the middle of Brandly and Bidwise. It looks like Brandly on the surface (content, workflows, brand, approvals) and runs like Bidwise underneath, with scale, reliability, and governance baked in. But it doesn't yet own the <strong style=\"color:#111\">features</strong> customers actually buy from either platform.",
+      "It owns the <strong style=\"color:#111\">foundation</strong> they sit on: reproducibility, live tracking, approval gates, encrypted credentials, tenant isolation. These are the bones; the muscle on top is the work for the next two quarters."
+    ],
+    "chips": [
+      {"tone": "green", "icon": "check", "title": "Foundation owned", "body": "Live tracking · approval gates · reproducibility · encryption · isolation"},
+      {"tone": "blue", "icon": "trending", "title": "Closeable in 1 qtr", "body": "Deliverability score · URL→brand · message packs · UTM · comparison view"},
+      {"tone": "amber", "icon": "alert", "title": "Need a call", "body": "Bidding · channel breadth · SOC 2 · in-product chat"}
+    ]
+  },
+  "matrix": {
+    "glance_notes": [
+      {"name": "Brandly", "count": "11/19", "title": "Brandly leads on content", "body": "Brand voice, message generation, scoring — all built and shipping."},
+      {"name": "Bidwise", "count": "9/19", "title": "Bidwise leads on commerce", "body": "Bidding, budget pacing, channels, attribution — the money layer."},
+      {"name": "Acme Outreach", "count": "8/19", "title": "Acme Outreach leads on rigor", "body": "Live tracking, human approval, reproducibility, isolation."}
+    ],
+    "capabilities": [
+      {"name": "Brand voice & guidelines", "reality": "We can store voice, look, and pillars. We can't yet enforce them at generation time.",
+       "verdicts": {"Brandly": {"status": "owned"}, "Bidwise": {"status": "gap"}, "Acme Outreach": {"status": "partial"}}},
+      {"name": "One-click brand from a URL", "reality": "Brandly scrapes a company website and builds the brand profile. We start blank.",
+       "verdicts": {"Brandly": {"status": "owned"}, "Bidwise": {"status": "gap"}, "Acme Outreach": {"status": "gap"}}},
+      {"name": "AI deliverability score", "reality": "Brandly grades messages for deliverability before send. We don't score yet.",
+       "verdicts": {"Brandly": {"status": "owned"}, "Bidwise": {"status": "gap"}, "Acme Outreach": {"status": "gap"}}},
+      {"name": "Bulk message packs", "reality": "One brief to many assets. Brandly ships templates; we run it manually.",
+       "verdicts": {"Brandly": {"status": "owned"}, "Bidwise": {"status": "gap"}, "Acme Outreach": {"status": "partial"}}},
+      {"name": "Message generation at scale", "reality": "Both Brandly and we generate at volume; Bidwise is not a content tool.",
+       "verdicts": {"Brandly": {"status": "owned"}, "Bidwise": {"status": "gap"}, "Acme Outreach": {"status": "owned"}}},
+      {"name": "Bid optimization", "reality": "Bidwise has years of ML bidding. Neither Brandly nor we play here.",
+       "verdicts": {"Brandly": {"status": "gap"}, "Bidwise": {"status": "owned"}, "Acme Outreach": {"status": "gap"}}},
+      {"name": "Budget pacing", "reality": "Bidwise paces spend across channels live. We can cap, not pace.",
+       "verdicts": {"Brandly": {"status": "gap"}, "Bidwise": {"status": "owned"}, "Acme Outreach": {"status": "partial"}}},
+      {"name": "Channel breadth", "reality": "Bidwise integrates 50+ channels. We integrate the few our buyers use.",
+       "verdicts": {"Brandly": {"status": "gap"}, "Bidwise": {"status": "owned"}, "Acme Outreach": {"status": "gap"}}},
+      {"name": "Attribution & measurement", "reality": "Bidwise owns this; Brandly and we report at the campaign level only.",
+       "verdicts": {"Brandly": {"status": "partial"}, "Bidwise": {"status": "owned"}, "Acme Outreach": {"status": "partial"}}},
+      {"name": "Live run tracking", "reality": "Watch every step as it happens, resumes cleanly across devices. Ours alone.",
+       "verdicts": {"Brandly": {"status": "gap"}, "Bidwise": {"status": "partial"}, "Acme Outreach": {"status": "ahead"}}},
+      {"name": "Human approval gates", "reality": "Approve, reject, or rewrite a step mid-run with a recorded decision.",
+       "verdicts": {"Brandly": {"status": "partial"}, "Bidwise": {"status": "gap"}, "Acme Outreach": {"status": "ahead"}}},
+      {"name": "Reproducible playbooks", "reality": "Re-run next month, get an identical result. Neither competitor guarantees this.",
+       "verdicts": {"Brandly": {"status": "gap"}, "Bidwise": {"status": "gap"}, "Acme Outreach": {"status": "ahead"}}},
+      {"name": "Multi-tenant isolation", "reality": "Data, spend, and limits walled off per customer from day one.",
+       "verdicts": {"Brandly": {"status": "partial"}, "Bidwise": {"status": "owned"}, "Acme Outreach": {"status": "ahead"}}},
+      {"name": "Connector auto-recovery", "reality": "Connectors detect outages, hold, probe, and resume with no operator.",
+       "verdicts": {"Brandly": {"status": "gap"}, "Bidwise": {"status": "partial"}, "Acme Outreach": {"status": "ahead"}}}
+    ]
+  },
+  "ahead": {
+    "sub": "Engineering moats Brandly and Bidwise don't trivially copy. Defend these; they're the wedge for enterprise sales.",
+    "items": [
+      {"title": "Reproducible playbooks", "body": "Re-run the same playbook next month and get an identical result. Neither Brandly nor Bidwise offers this guarantee."},
+      {"title": "Live run tracking", "body": "Watch every step as it happens. Refresh, drop network, switch devices — the view resumes cleanly."},
+      {"title": "Human approval gates", "body": "A reviewer can approve, reject, or rewrite a step mid-run. The workflow pauses, the decision is recorded, execution resumes."},
+      {"title": "Connector reliability", "body": "When a vendor goes down or a credential expires, our connectors detect, hold, probe for recovery, and resume — with no operator intervention."},
+      {"title": "Enterprise-grade isolation", "body": "Every customer's data, spend, and limits walled off from day one. No retrofitting needed for compliance."}
+    ]
+  },
+  "closeable": {
+    "sub": "Each gap maps to existing schema or services. Six items, all shippable inside a quarter.",
+    "items": [
+      {"title": "AI deliverability score", "desc": "A scorer that grades messages against deliverability guidelines before send", "effort": "2–3 wks", "priority": "HIGH", "effort_level": "low", "value": "high"},
+      {"title": "One-click brand from URL", "desc": "Scrape a company website and auto-fill brand voice, audience, and knowledge base", "effort": "3–4 wks", "priority": "HIGH", "effort_level": "med", "value": "high"},
+      {"title": "Bulk message-pack template", "desc": "One brief in → email, social, and follow-up sequence out, in one run", "effort": "2 wks", "priority": "HIGH", "effort_level": "low", "value": "high"},
+      {"title": "Playbook comparison dashboard", "desc": "Side-by-side view of cost, completion rate, and outcomes across playbooks", "effort": "2 wks", "priority": "MEDIUM", "effort_level": "low", "value": "med"},
+      {"title": "Finish connector refresh", "desc": "The last piece of plumbing to keep connected vendor tools auto-updated", "effort": "3 days", "priority": "MEDIUM", "effort_level": "low", "value": "med"},
+      {"title": "UTM auto-tagging", "desc": "Stamp every output with the right tracking parameters automatically", "effort": "1 wk", "priority": "MEDIUM", "effort_level": "low", "value": "med"}
+    ]
+  },
+  "decisions": {
+    "sub": "Not engineering tasks. These get decided in a leadership room, not a sprint.",
+    "items": [
+      {"title": "Bidding", "body": "Do we play in bid optimization at all? Bidwise has years of ML bidding behind their engine. We'd be several engineers deep before we caught up."},
+      {"title": "Channels", "body": "Match Bidwise's 50+ channel coverage, or pick the few our buyers actually use? This is a partnerships problem, not a coding one."},
+      {"title": "SOC 2", "body": "When does SOC 2 stop being optional? The trigger is usually the first enterprise procurement call."},
+      {"title": "In-product chat", "body": "Do we build chat at all, or assume buyers use a general assistant alongside us? Only the brand-aware version is worth building."}
+    ]
+  },
+  "positioning": {
+    "sub": "The one paragraph to keep in your head after closing this doc.",
+    "stats": [
+      {"tone": "blue", "value": "Underneath", "label": "Where we sit"},
+      {"tone": "green", "value": "Foundation", "label": "What we own"},
+      {"tone": "amber", "value": "2 qtrs", "label": "To parity"}
+    ],
+    "paragraphs": [
+      "Acme Outreach is <strong>not</strong> sitting between Brandly and Bidwise. It is <strong>the execution platform underneath them that neither one offers:</strong> live tracking, multi-tenant from day one, encrypted credentials per customer, human approval gates, and reproducible playbooks.",
+      "Brandly sits <em>above</em> a platform like this and bundles a polished content interface on top. Bidwise sits <em>beside</em> it and sells media buying. The real position:"
+    ],
+    "pullquote": "Brandly's content intelligence on Bidwise's enterprise reliability, with an open connector model.",
+    "closing": "Three things stand between us and saying that out loud: brand-from-URL, a deliverability score, and bulk message packs before we can stand next to Brandly. On Bidwise's side, the call isn't engineering — it's whether we want to play in bidding at all.",
+    "checklists": [
+      {"title": "To match Brandly", "marker": "→", "marker_color": "#245AE2", "items": ["One-click brand from URL", "AI deliverability scoring", "Bulk message packs"]},
+      {"title": "To match Bidwise", "marker": "?", "marker_color": "#D97706", "items": ["Bid optimization (decide first)", "Channel breadth (decide)"]},
+      {"title": "Already ours", "tone": "green", "marker": "✓", "items": ["Live tracking · approvals · reproducibility", "Encryption · tenant isolation"]}
+    ]
+  },
+  "sources": {
+    "external": [
+      {"label": "Brandly homepage", "url": "https://example.com/brandly"},
+      {"label": "Brandly product page", "url": "https://example.com/brandly/product"},
+      {"label": "Bidwise homepage", "url": "https://example.com/bidwise"},
+      {"label": "Bidwise solutions", "url": "https://example.com/bidwise/solutions"}
+    ],
+    "internal": [
+      "internal/architecture/overview.md",
+      "internal/features/ (feature docs)"
+    ]
+  }
+}

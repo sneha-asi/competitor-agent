@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# Generated analysis pages (run outputs) — keep the example fixture, not real runs
+*-comparison.html
+/out/
+/runs/
+
+# Scratch data for real runs (the schema lives in references/example-data.json)
+/data.json
+
+# Standalone app
+.env
+app/frontend/node_modules/
+app/frontend/dist/
