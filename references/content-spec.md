@@ -23,7 +23,7 @@ you can omit sections you don't have. Fields marked HTML-ok may contain inline t
   "meta": {
     "org": "Acme AI",                 // brand: header top-left + footer
     "date_label": "May 2026 · Internal",
-    "author": "Sneha Gupta",          // footer "prepared by"
+    "author": "Jane Analyst",         // footer "prepared by"
     "analyst_note": "what wasn't verifiable, recency of research"   // optional, for your record
   },
 
